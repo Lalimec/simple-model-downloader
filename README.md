@@ -2,6 +2,8 @@
 
 A simple and efficient model downloader extension for ComfyUI that allows downloading models with progress tracking and folder management.
 
+![image](https://github.com/user-attachments/assets/f3bb0a2e-6966-4c5b-8e6d-e0585e09f4b5)
+
 ## Features
 
 - 📥 Download models directly from URLs
