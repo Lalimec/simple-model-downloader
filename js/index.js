@@ -363,14 +363,15 @@ class DownloadButton {
 
                     const data = await response.json();
                     if (!data.success) {
-                        app.ui.notifications.error(data.error || 'Download failed');
                         progressContainer.style.display = 'none';
                         progressText.textContent = '';
+                        app.ui.notifications.error(data.error || 'Download failed');
+                        return;
                     }
                 } catch (error) {
-                    app.ui.notifications.error('Error starting download: ' + error.message);
                     progressContainer.style.display = 'none';
                     progressText.textContent = '';
+                    app.ui.notifications.error(error?.message || 'Error starting download');
                 } finally {
                     downloadBtn.disabled = false;
                 }
