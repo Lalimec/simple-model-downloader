@@ -1,0 +1,27 @@
+[project]
+name = "comfyui-simple-model-downloader"
+version = "1.0.0"
+description = "A simple model downloader extension for ComfyUI that allows downloading models with progress tracking"
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.8"
+dependencies = [
+    "aiohttp>=3.8.0"
+]
+
+[tool.comfyui]
+# Unique identifier for the custom node
+name = "Simple Model Downloader"
+# Category in the UI where the custom node will appear
+category = "utils"
+# Optional: Additional tags for searchability
+tags = ["model", "downloader", "utility"]
+
+[tool.comfyui.features]
+# List of features this custom node provides
+features = [
+    "model-management",
+    "download-utility"
+] 
