@@ -28,7 +28,7 @@ cd ComfyUI/custom_nodes/
 
 2. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/comfyui-simple-model-downloader
+git clone https://github.com/Lalimec/simple-model-downloader
 ```
 
 3. Install dependencies:
