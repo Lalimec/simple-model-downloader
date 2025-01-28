@@ -3,6 +3,7 @@ import asyncio
 from aiohttp import web
 import re
 from server import PromptServer
+import aiohttp
 
 # Get the base models directory
 BASE_MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "models")
@@ -133,6 +134,17 @@ async def get_directories(request):
     except Exception as e:
         return web.json_response({'success': False, 'error': str(e)})
 
+async def validate_url(url):
+    """Validate URL is accessible"""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.head(url, allow_redirects=True) as response:
+                if response.status != 200:
+                    raise ValueError(f"URL returned status code {response.status}")
+                return True
+    except aiohttp.ClientError as e:
+        raise ValueError(f"Failed to access URL: {str(e)}")
+
 async def download_model(request):
     """Download a model using wget and track progress"""
     try:
@@ -143,15 +155,38 @@ async def download_model(request):
         
         if not url or not model_name:
             return web.json_response({'success': False, 'error': 'Missing URL or model name'})
+        
+        # Validate URL content before proceeding
+        try:
+            await validate_url(url)
+        except ValueError as e:
+            return web.json_response({'success': False, 'error': str(e)})
             
         try:
             # Get extension from URL and validate it
-            extension = get_extension_from_url(url)
+            url_extension = get_extension_from_url(url)
         except ValueError as e:
             return web.json_response({'success': False, 'error': str(e)})
         
-        # Ensure safe filename
-        safe_name = "".join([c for c in model_name if c.isalnum() or c in ('-', '_')]) + extension
+        # Check if model_name already has a supported extension
+        model_extension = os.path.splitext(model_name)[1].lower()
+        if model_extension:
+            if model_extension not in SUPPORTED_EXTENSIONS:
+                return web.json_response({
+                    'success': False, 
+                    'error': f'Invalid extension: {model_extension}. Supported extensions are: {", ".join(SUPPORTED_EXTENSIONS)}'
+                })
+            # Ensure the model extension matches the URL extension
+            if model_extension != url_extension:
+                return web.json_response({
+                    'success': False,
+                    'error': f'Extension mismatch: URL has {url_extension} but model name has {model_extension}'
+                })
+            safe_name = "".join([c for c in model_name if c.isalnum() or c in ('-', '_', '.')])
+        else:
+            # Add the extension from URL if model name doesn't have a supported extension
+            safe_name = "".join([c for c in model_name if c.isalnum() or c in ('-', '_')]) + url_extension
+        
         output_path = os.path.join(BASE_MODELS_DIR, save_path, safe_name)
         
         # Ensure the directory exists
@@ -219,8 +254,25 @@ async def check_file_exists(request):
         if not model_name or not extension:
             return web.json_response({'success': False, 'error': 'Missing model name or extension'})
             
-        # Ensure safe filename
-        safe_name = "".join([c for c in model_name if c.isalnum() or c in ('-', '_')]) + extension
+        # Check if model_name already has a supported extension
+        model_extension = os.path.splitext(model_name)[1].lower()
+        if model_extension:
+            if model_extension not in SUPPORTED_EXTENSIONS:
+                return web.json_response({
+                    'success': False, 
+                    'error': f'Invalid extension: {model_extension}. Supported extensions are: {", ".join(SUPPORTED_EXTENSIONS)}'
+                })
+            safe_name = "".join([c for c in model_name if c.isalnum() or c in ('-', '_', '.')])
+        else:
+            # Validate the provided extension
+            if extension not in SUPPORTED_EXTENSIONS:
+                return web.json_response({
+                    'success': False,
+                    'error': f'Invalid extension: {extension}. Supported extensions are: {", ".join(SUPPORTED_EXTENSIONS)}'
+                })
+            # Add the provided extension if model name doesn't have a supported extension
+            safe_name = "".join([c for c in model_name if c.isalnum() or c in ('-', '_')]) + extension
+            
         file_path = os.path.join(BASE_MODELS_DIR, save_path, safe_name)
         
         exists = os.path.exists(file_path)
