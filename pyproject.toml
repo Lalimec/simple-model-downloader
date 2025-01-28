@@ -1,7 +1,7 @@
 [project]
 name = "simple-model-downloader"
 description = ""
-version = "1.0.1"
+version = "1.0.2"
 license = {file = "LICENSE"}
 dependencies = ["aiohttp>=3.8.0"]
 

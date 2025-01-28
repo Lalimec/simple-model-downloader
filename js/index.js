@@ -353,6 +353,7 @@ class DownloadButton {
                     downloadBtn.disabled = true;
                     progressContainer.style.display = 'block';
                     progressBar.style.width = '0%';
+                    progressBar.style.backgroundColor = 'var(--comfy-active-color)';
                     progressText.textContent = 'Starting download...';
 
                     const response = await fetch('/simple-model-downloader/download', {
@@ -363,15 +364,15 @@ class DownloadButton {
 
                     const data = await response.json();
                     if (!data.success) {
-                        progressContainer.style.display = 'none';
-                        progressText.textContent = '';
-                        app.ui.notifications.error(data.error || 'Download failed');
+                        progressBar.style.backgroundColor = 'var(--error-text)';
+                        progressBar.style.width = '100%';
+                        progressText.textContent = data.error || 'Download failed';
                         return;
                     }
                 } catch (error) {
-                    progressContainer.style.display = 'none';
-                    progressText.textContent = '';
-                    app.ui.notifications.error(error?.message || 'Error starting download');
+                    progressBar.style.backgroundColor = 'var(--error-text)';
+                    progressBar.style.width = '100%';
+                    progressText.textContent = 'Error starting download';
                 } finally {
                     downloadBtn.disabled = false;
                 }

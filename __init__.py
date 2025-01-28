@@ -51,7 +51,7 @@ def get_extension_from_url(url):
     if not extension:
         raise ValueError("URL has no file extension")
     if extension not in SUPPORTED_EXTENSIONS:
-        raise ValueError(f"Unsupported file extension: {extension}. Supported extensions are: {', '.join(SUPPORTED_EXTENSIONS)}")
+        raise ValueError(f"Unsupported file extension: {extension}. Supported extensions are: {', '.join(sorted(SUPPORTED_EXTENSIONS))}")
     return extension
 
 def parse_wget_output(line: str) -> dict:
@@ -160,7 +160,7 @@ async def download_model(request):
         try:
             await validate_url(url)
         except ValueError as e:
-            return web.json_response({'success': False, 'error': str(e)})
+            return web.json_response({'success': False, 'error': f"URL validation failed: {str(e)}"})
             
         try:
             # Get extension from URL and validate it
@@ -174,19 +174,26 @@ async def download_model(request):
             if model_extension not in SUPPORTED_EXTENSIONS:
                 return web.json_response({
                     'success': False, 
-                    'error': f'Invalid extension: {model_extension}. Supported extensions are: {", ".join(SUPPORTED_EXTENSIONS)}'
+                    'error': f'Invalid model name extension: {model_extension}. Supported extensions are: {", ".join(sorted(SUPPORTED_EXTENSIONS))}'
                 })
             # Ensure the model extension matches the URL extension
             if model_extension != url_extension:
                 return web.json_response({
                     'success': False,
-                    'error': f'Extension mismatch: URL has {url_extension} but model name has {model_extension}'
+                    'error': f'Extension mismatch: URL has {url_extension} but model name has {model_extension}. Please make sure they match.'
                 })
             safe_name = "".join([c for c in model_name if c.isalnum() or c in ('-', '_', '.')])
         else:
             # Add the extension from URL if model name doesn't have a supported extension
             safe_name = "".join([c for c in model_name if c.isalnum() or c in ('-', '_')]) + url_extension
         
+        # Validate final filename
+        if not safe_name:
+            return web.json_response({
+                'success': False,
+                'error': 'Invalid model name: name contains no valid characters'
+            })
+            
         output_path = os.path.join(BASE_MODELS_DIR, save_path, safe_name)
         
         # Ensure the directory exists
